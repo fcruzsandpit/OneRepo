@@ -1,0 +1,73 @@
+trigger:
+- main
+
+parameters:
+- name: workingDirectory
+  displayName: "Select Terraform Folder"
+  type: string
+  default: "Francis"
+  values:
+  - Francis
+  - Safi
+  - Raj
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  azureServiceConnection: 'terraform-service-connection'
+
+stages:
+
+# 🔹 STAGE 1 - PLAN
+- stage: Terraform_Plan
+  displayName: "Terraform Plan"
+  jobs:
+  - job: Plan
+    steps:
+
+    - task: TerraformInstaller@1
+      inputs:
+        terraformVersion: 'latest'
+
+    - task: AzureCLI@2
+      displayName: "Terraform Init & Plan"
+      inputs:
+        azureSubscription: $(azureServiceConnection)
+        scriptType: bash
+        scriptLocation: inlineScript
+        inlineScript: |
+          cd ${{ parameters.workingDirectory }}
+
+          terraform init -input=false
+          terraform validate
+          terraform plan -out=tfplan
+
+# 🔹 STAGE 2 - APPLY (WITH APPROVAL)
+- stage: Terraform_Apply
+  displayName: "Terraform Apply"
+  dependsOn: Terraform_Plan
+  condition: succeeded()
+  jobs:
+  - deployment: Apply
+    environment: terraform-approval   # 🔥 Approval happens here
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+
+          - task: TerraformInstaller@1
+            inputs:
+              terraformVersion: 'latest'
+
+          - task: AzureCLI@2
+            displayName: "Terraform Apply"
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: bash
+              scriptLocation: inlineScript
+              inlineScript: |
+                cd ${{ parameters.workingDirectory }}
+
+                terraform init -input=false
+                terraform apply -auto-approve tfplan

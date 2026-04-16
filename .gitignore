@@ -1,0 +1,18 @@
+# Terraform local files
+.terraform/
+
+# State files (VERY IMPORTANT ❌ NEVER COMMIT)
+*.tfstate
+*.tfstate.backup
+
+# Lock file (optional to ignore, but many teams KEEP it)
+#.terraform.lock.hcl
+
+# Sensitive variables
+*.tfvars
+
+# Crash logs
+crash.log
+
+# MacOS (since you're on Mac)
+.DS_Store

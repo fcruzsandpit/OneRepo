@@ -23,10 +23,17 @@ stages:
 
 # 🔹 STAGE 1 - PLAN
 - stage: Terraform_Plan
-  displayName: "Terraform Plan"
   jobs:
   - job: Plan
     steps:
+
+    # ✅ Install Terraform
+    - script: |
+        wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
+        unzip terraform_1.6.6_linux_amd64.zip
+        sudo mv terraform /usr/local/bin/
+        terraform version
+      displayName: "Install Terraform"
 
     - task: AzureCLI@2
       displayName: "Terraform Init & Plan"
@@ -39,26 +46,29 @@ stages:
 
           export TF_VAR_admin_password=$(admin_password)
 
-          terraform version
           terraform init -input=false
           terraform validate
           terraform plan -out=tfplan
 
-          echo "========== PLAN OUTPUT =========="
           terraform show tfplan
 
 # 🔹 STAGE 2 - APPLY (WITH APPROVAL)
 - stage: Terraform_Apply
-  displayName: "Terraform Apply"
-  dependsOn: Terraform_Plan
-  condition: succeeded()
   jobs:
   - deployment: Apply
-    environment: terraform-approval   # 🔥 Approval gate
+    environment: terraform-approval
     strategy:
       runOnce:
         deploy:
           steps:
+
+          # ✅ Install Terraform again
+          - script: |
+              wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
+              unzip terraform_1.6.6_linux_amd64.zip
+              sudo mv terraform /usr/local/bin/
+              terraform version
+            displayName: "Install Terraform"
 
           - task: AzureCLI@2
             displayName: "Terraform Apply"

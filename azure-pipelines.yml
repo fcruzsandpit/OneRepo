@@ -1,5 +1,7 @@
 trigger:
-- main
+  branches:
+    include:
+      - '*'   # run for all branches
 
 parameters:
 - name: workingDirectory
@@ -26,10 +28,6 @@ stages:
   - job: Plan
     steps:
 
-    - task: TerraformInstaller@1
-      inputs:
-        terraformVersion: 'latest'
-
     - task: AzureCLI@2
       displayName: "Terraform Init & Plan"
       inputs:
@@ -39,9 +37,15 @@ stages:
         inlineScript: |
           cd ${{ parameters.workingDirectory }}
 
+          export TF_VAR_admin_password=$(admin_password)
+
+          terraform version
           terraform init -input=false
           terraform validate
           terraform plan -out=tfplan
+
+          echo "========== PLAN OUTPUT =========="
+          terraform show tfplan
 
 # 🔹 STAGE 2 - APPLY (WITH APPROVAL)
 - stage: Terraform_Apply
@@ -50,15 +54,11 @@ stages:
   condition: succeeded()
   jobs:
   - deployment: Apply
-    environment: terraform-approval   # 🔥 Approval happens here
+    environment: terraform-approval   # 🔥 Approval gate
     strategy:
       runOnce:
         deploy:
           steps:
-
-          - task: TerraformInstaller@1
-            inputs:
-              terraformVersion: 'latest'
 
           - task: AzureCLI@2
             displayName: "Terraform Apply"
@@ -68,6 +68,8 @@ stages:
               scriptLocation: inlineScript
               inlineScript: |
                 cd ${{ parameters.workingDirectory }}
+
+                export TF_VAR_admin_password=$(admin_password)
 
                 terraform init -input=false
                 terraform apply -auto-approve tfplan

@@ -24,12 +24,12 @@ resource "azurerm_subnet" "subnet" {
 }
 
 # 🔹 Public IP
-resource "azurerm_public_ip" "pip" {
-  name                = var.public_ip_name
-  location            = var.location
-  resource_group_name = data.azurerm_resource_group.rg.name
-  allocation_method   = "Static"
-}
+#resource "azurerm_public_ip" "pip" {
+#  name                = var.public_ip_name
+#  location            = var.location
+#  resource_group_name = data.azurerm_resource_group.rg.name
+#  allocation_method   = "Static"
+#}
 
 # 🔹 Network Interface
 resource "azurerm_network_interface" "nic" {

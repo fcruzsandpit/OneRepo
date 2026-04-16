@@ -1,8 +1,8 @@
-trigger:
-  branches:
-    include:
-      - '*'   # run for all branches
+# 🚫 Disable automatic triggers
+trigger: none
+pr: none
 
+# 🧩 Optional parameter (kept for future use)
 parameters:
 - name: workingDirectory
   displayName: "Select Terraform Folder"
@@ -16,70 +16,13 @@ parameters:
 pool:
   vmImage: 'ubuntu-latest'
 
-variables:
-  azureServiceConnection: 'terraform-service-connection'
-
 stages:
-
-# 🔹 STAGE 1 - PLAN
-- stage: Terraform_Plan
+- stage: Disabled
+  displayName: "Pipeline Disabled"
   jobs:
-  - job: Plan
+  - job: NoOp
     steps:
-
-    # ✅ Install Terraform
     - script: |
-        wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
-        unzip terraform_1.6.6_linux_amd64.zip
-        sudo mv terraform /usr/local/bin/
-        terraform version
-      displayName: "Install Terraform"
-
-    - task: AzureCLI@2
-      displayName: "Terraform Init & Plan"
-      inputs:
-        azureSubscription: $(azureServiceConnection)
-        scriptType: bash
-        scriptLocation: inlineScript
-        inlineScript: |
-          cd ${{ parameters.workingDirectory }}
-
-          export TF_VAR_admin_password=$(admin_password)
-
-          terraform init -input=false
-          terraform validate
-          terraform plan -out=tfplan
-
-          terraform show tfplan
-
-# 🔹 STAGE 2 - APPLY (WITH APPROVAL)
-- stage: Terraform_Apply
-  jobs:
-  - deployment: Apply
-    environment: terraform-approval
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-
-          # ✅ Install Terraform again
-          - script: |
-              wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
-              unzip terraform_1.6.6_linux_amd64.zip
-              sudo mv terraform /usr/local/bin/
-              terraform version
-            displayName: "Install Terraform"
-
-          - task: AzureCLI@2
-            displayName: "Terraform Apply"
-            inputs:
-              azureSubscription: $(azureServiceConnection)
-              scriptType: bash
-              scriptLocation: inlineScript
-              inlineScript: |
-                cd ${{ parameters.workingDirectory }}
-
-                export TF_VAR_admin_password=$(admin_password)
-
-                terraform init -input=false
-                terraform apply -auto-approve tfplan
+        echo "🚫 Pipeline is currently disabled."
+        echo "Use local Terraform CLI for now."
+      displayName: "No Operation"
